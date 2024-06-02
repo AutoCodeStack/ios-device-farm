@@ -1,7 +1,5 @@
 # ios-device-farm
 
-## WORK IN PROGRESS
-## WORK IN PROGRESS
-
-### Wait once in working mode, we'll release a readme file 
+## WORK IN PROGRESS ETA is set to end of July, 2024
+### Wait, we'll release a readme file 
 ### to configure this project
