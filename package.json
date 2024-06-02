@@ -1,0 +1,32 @@
+{
+	"name": "ios-device-farm",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"dev": "npx nodemon",
+		"build": "rimraf ./build && tsc",
+		"start": "npm run build && node build/index.js",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"devDependencies": {
+		"@types/node": "^20.10.5",
+		"nodemon": "^3.0.2",
+		"rimraf": "^5.0.5",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.3.3",
+		"@types/busboy": "^1.5.3",
+		"@types/teen_process": "^2.0.4",
+		"@types/winston": "^2.4.4"
+	},
+	"dependencies": {
+		"busboy": "^1.6.0",
+		"dotenv": "^16.3.1",
+		"go-ios": "^1.0.121",
+		"teen_process": "^2.1.1",
+		"winston": "^3.11.0"
+	}
+}
