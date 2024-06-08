@@ -1,4 +1,5 @@
-import { Device } from "../../model/device";
+import { Device } from "../../schema/device";
+import logger from "../../config/logger";
 
 class WDA {
 	private device: Device;
@@ -13,13 +14,8 @@ class WDA {
 
 	public async connect(): Promise<void> {
 		try {
-			console.log(
-				`Connecting to device: ${this.device.name} (UDID: ${this.device.udid}, Version: ${this.device.version})`
-			);
-			await this.startWebDriverAgent();
-			console.log(`Connected to WebDriverAgent on device: ${this.device.name}`);
 		} catch (error) {
-			console.error(`Failed to connect to WebDriverAgent on device: ${this.device.name}`, error);
+			logger.error(`Failed to connect to WebDriverAgent on device: ${this.device.name}`, error);
 		}
 	}
 

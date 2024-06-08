@@ -1,3 +1,5 @@
+import { getDeviceName } from "../utils/idf.device.map";
+
 export type Device = {
 	id: number;
 	name: string;
@@ -5,7 +7,7 @@ export type Device = {
 	version: string;
 };
 
-export interface DeviceInfo {
+export type DeviceInfo = {
 	ActivationState: string;
 	ActivationStateAcknowledged: boolean;
 	DeviceClass: string;
@@ -13,22 +15,22 @@ export interface DeviceInfo {
 	ProductName: string;
 	ProductType: string;
 	ProductVersion: string;
-}
+};
 
-export interface DeviceConnectEvent {
+export type DeviceConnectEvent = {
 	MessageType: string;
 	DeviceID: number;
 	Properties: Properties;
-}
+};
 
-export interface Properties {
+export type Properties = {
 	ConnectionSpeed: number;
 	ConnectionType: string;
 	DeviceID: number;
 	LocationID: number;
 	ProductID: number;
 	SerialNumber: string;
-}
+};
 
 export class Convert {
 	public static toDeviceConnectEvent(json: string): DeviceConnectEvent {
@@ -37,5 +39,16 @@ export class Convert {
 
 	public static deviceConnectEventToJson(value: DeviceConnectEvent): string {
 		return JSON.stringify(value);
+	}
+
+	public static toDevice(info: DeviceInfo, connectEvent: DeviceConnectEvent) {
+		const deviceName = getDeviceName(info.ProductType);
+		const device: Device = {
+			id: connectEvent.DeviceID,
+			name: deviceName ?? "iPhone",
+			udid: connectEvent.Properties.SerialNumber,
+			version: info.ProductVersion,
+		};
+		return device;
 	}
 }

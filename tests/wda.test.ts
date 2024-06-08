@@ -1,6 +1,6 @@
 import "jest";
-import WDA from "../src/app/wda/wda";
-import { Device } from "../src/model/device";
+import WDA from "../src/modules/wda/wda";
+import { Device } from "../src/schema/device";
 
 const wda = new WDA({ udid: "0", name: "a", version: "" } as Device);
 
