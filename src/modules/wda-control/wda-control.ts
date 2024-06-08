@@ -1,83 +1,92 @@
 import { Session } from "./types/session";
-import { createSession, deleteSession } from "./commands/session-commands";
-import { openUrlCommand, tapCommand, textCommand } from "./commands/session-commands";
-import { homeScreenCommand } from "./commands/custom-commands";
+import { WdaService } from "./wda-service/service";
+import { HttpMethod, WdaEndpoints } from "./wda-service/wda-endpoints";
+import { WdaCommands } from "./types/command";
+import logger from "../../config/logger";
 
 class WdaControl {
-	port: number;
+	service: WdaService;
 	sessionId: string = "0";
 
 	constructor(port: number) {
-		this.port = port;
+		this.service = new WdaService(port);
 	}
 
-	createWdaSession = async () => {
+	async createWdaSession(): Promise<void> {
 		try {
-			const response = await createSession(this.port);
+			const postData = { capabilities: {} };
+			const response = await this.service.apiCall(WdaEndpoints.CREATE_SESSION, HttpMethod.POST, postData);
 			const session: Session = response.data;
-			if (session) {
+			if (session?.sessionId) {
 				this.sessionId = session.sessionId;
+			} else {
+				throw new Error("Invalid session data received");
 			}
-		} catch (error) {
+		} catch (error: any) {
+			logger.error(`Failed to create WDA session: ${error.message || error}`);
 			throw new Error("Failed to create WDA session");
 		}
-	};
+	}
 
-	deleteWdaSession = async (): Promise<Session | null> => {
-		const response = await deleteSession(this.port, this.sessionId);
-		const session: Session = response.data;
-		return new Promise((resolve, reject) => {
+	async deleteWdaSession(): Promise<Session> {
+		try {
+			const response = await this.service.apiCall(WdaEndpoints.DELETE_SESSION, HttpMethod.DELETE, null, { sessionId: this.sessionId });
+			const session: Session = response.data;
 			if (session) {
-				resolve(session);
+				return session;
 			} else {
-				reject({ message: response.data.value.message });
+				throw new Error(response.data?.value?.message || "Failed to delete WDA session");
 			}
-		});
-	};
+		} catch (error: any) {
+			logger.error(`Failed to delete WDA session: ${error.message || error}`);
+			throw new Error("Failed to delete WDA session");
+		} finally {
+			this.sessionId = "0";
+		}
+	}
 
-	openUrl = async (urlToOpen: string): Promise<any> => {
-		const response = await openUrlCommand(this.port, this.sessionId, urlToOpen);
-		return new Promise((resolve, reject) => {
-			if (response.status === 200) {
-				resolve({ success: true });
-			} else {
-				reject({ message: response.data.value.message });
-			}
-		});
-	};
+	async performCommand(command: WdaCommands, data?: any): Promise<{ success: boolean }> {
+		const params = { sessionId: this.sessionId };
+		try {
+			let endpoint: WdaEndpoints;
+			let method: HttpMethod;
+			let postData: any = data;
 
-	openHomeScreen = async (): Promise<any> => {
-		const response = await homeScreenCommand(this.port);
-		return new Promise((resolve, reject) => {
-			if (response.status === 200) {
-				resolve({ success: true });
-			} else {
-				reject({ message: response.data.value.message });
+			switch (command) {
+				case WdaCommands.OPEN_URL:
+					endpoint = WdaEndpoints.OPEN_URL;
+					method = HttpMethod.POST;
+					break;
+				case WdaCommands.TAP:
+					endpoint = WdaEndpoints.CUSTOM_TAP;
+					method = HttpMethod.POST;
+					break;
+				case WdaCommands.TEXT_INPUT:
+					endpoint = WdaEndpoints.ENTER_TEXT;
+					method = HttpMethod.POST;
+					break;
+				case WdaCommands.HOMESCREEN:
+					endpoint = WdaEndpoints.WDA_HOMESCREEN;
+					method = HttpMethod.POST;
+					postData = null; // HOMESCREEN might not require data
+					break;
+				default:
+					logger.error("Unknown command");
+					return { success: false };
 			}
-		});
-	};
 
-	typeText = async (text: string): Promise<any> => {
-		const response = await textCommand(this.port, this.sessionId, text);
-		return new Promise((resolve, reject) => {
-			if (response.status === 200) {
-				resolve({ success: true });
-			} else {
-				reject({ message: response.data.value.message });
-			}
-		});
-	};
+			const response = await this.service.apiCall(endpoint, method, postData, params);
 
-	tapByCoordinates = async (x: number, y: number): Promise<any> => {
-		const response = await tapCommand(this.port, this.sessionId, x, y);
-		return new Promise((resolve, reject) => {
 			if (response.status === 200) {
-				resolve({ success: true });
+				return { success: true };
 			} else {
-				reject({ message: response.data.value.message });
+				throw new Error(response.data?.value?.message || "Unknown command execution error");
 			}
-		});
-	};
+		} catch (error: any) {
+			logger.error(`Command execution failed: ${error.message || error}`);
+			throw new Error(`Failed to execute command`);
+		}
+	}
 }
 
 export { WdaControl };

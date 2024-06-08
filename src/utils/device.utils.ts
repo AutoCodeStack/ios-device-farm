@@ -134,6 +134,15 @@ const iPadModels: DeviceMap = {
 	"iPad14,6": "iPad Pro (12.9-inch) (6th generation)",
 };
 
+const getDeviceSize = (name: string) => {
+	switch (name) {
+		case "iPhone 11":
+			return { dpr: 2, height: 896, width: 414 };
+		default:
+			return { dpr: 2, height: 896, width: 414 };
+	}
+};
+
 export function getDeviceName(machineId: string): string | undefined {
 	return iPhoneModels[machineId] || iPadModels[machineId] || undefined;
 }

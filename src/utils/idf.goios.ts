@@ -1,5 +1,5 @@
 import { exec } from "teen_process";
-import { go_ios_path } from "./idf.path";
+import { go_ios_path } from "./path.utils";
 import { DeviceInfo } from "../schema/device";
 
 export const getDeviceInfo = async (udid: string): Promise<DeviceInfo | undefined> => {

@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import { SubProcess } from "teen_process";
-import { go_ios_path } from "../../utils/idf.path";
+import { go_ios_path } from "../../utils/path.utils";
 import { Convert, DeviceConnectEvent } from "../../schema/device";
 
 class DeviceDetector extends EventEmitter {

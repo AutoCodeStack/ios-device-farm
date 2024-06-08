@@ -1,4 +1,4 @@
-import { getDeviceName } from "../utils/idf.device.map";
+import { getDeviceName } from "../utils/device.utils";
 
 export type Device = {
 	id: number;
