@@ -1,28 +1,32 @@
 import { Device } from "../../schema/device";
 import logger from "../../config/logger";
-import { SubProcess } from "teen_process";
-import findFreePorts from "find-free-ports";
-import { APP_ENV } from "../../config/config";
+import { WebDriverAgent } from "./procs/webdriveragent";
+import { WdaControl } from "./control/wda-control";
 
 class WDA {
+	private webDriverAgent: WebDriverAgent;
 	private device: Device;
-
-	webDriverAgentProcess?: SubProcess;
-	wdaControlTunnel?: SubProcess;
-	mjpegStreamTunnel?: SubProcess;
+	private wdaControl?: WdaControl;
 
 	constructor(device: Device) {
 		this.device = device;
+		this.webDriverAgent = new WebDriverAgent(device.udid);
 	}
 
 	public getDevice() {
 		return this.device;
 	}
 
-	public async start(): Promise<void> {
+	public async start(): Promise<boolean> {
 		try {
+			const started = await this.webDriverAgent.start();
+			if (started) {
+				this.wdaControl = new WdaControl(this.webDriverAgent.port ?? 8100);
+			}
+			return started;
 		} catch (error) {
 			logger.error(`Failed to connect to WebDriverAgent on device: ${this.device.name}`, error);
+			return false;
 		}
 	}
 

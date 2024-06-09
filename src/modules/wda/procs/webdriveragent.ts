@@ -1,82 +1,70 @@
-import findFreePorts from "find-free-ports";
-import { SubProcess } from "teen_process";
-import { APP_ENV } from "../../../config/config";
+import { WebDriverAgentProcess } from "./webdriveragent.proc";
+import { TunnelManager } from "./tunnel.proc";
 import logger from "../../../config/logger";
 
 class WebDriverAgent {
+	udid: string;
 	port?: number;
 	mjpegPort?: number;
-	webDriverAgentProcess?: SubProcess;
-	tunnelProcess?: SubProcess;
+	private webDriverAgentProcess?: WebDriverAgentProcess;
+	private tunnelManager?: TunnelManager;
 
-	start = async (udid: string) => {
-		const wdaStartStatus = await this.startWebDriverAgentProcess(udid);
-		if (!wdaStartStatus) {
-			return new Promise((res) => res(false));
-		}
+	constructor(udid: string) {
+		this.udid = udid;
+	}
 
-		const tunnelStartStatus = await this.startTunnel(udid);
-		if (!tunnelStartStatus) {
-			await this.stopWebDriverAgent();
-			return new Promise((res) => res(false));
-		}
-
-		return new Promise((res) => res(true));
-	};
-
-	startWebDriverAgentProcess = async (udid: string) => {
+	async start(): Promise<boolean> {
 		try {
-			const [a, b] = await findFreePorts(2);
-			const wdaProject = APP_ENV.WEBDRIVERAGENT_PROJECT + "/WebDriverAgent.xcodeproj";
-			const args = ["test", "-project", wdaProject, "-scheme", "WebDriverAgentRunner", "-destination", `id=${udid}`, `USE_PORT=${a}`, `MJPEG_SERVER_PORT=${b}`];
-			this.webDriverAgentProcess = new SubProcess("xcodebuild", args);
-			this.webDriverAgentProcess.on("die", this.onProcessDie);
-			const sd = (stdout: string, stderr: string) => {
-				console.log(stdout);
-				console.log(stderr);
-				return stderr.indexOf("<-ServerURLHere") >= 0;
-			};
-			await this.webDriverAgentProcess.start(sd, 60000);
-			this.port = a;
-			this.mjpegPort = b;
-			return new Promise((res) => res(true));
-		} catch (error: Error | any) {
-			logger.error(`Webdriveragent process start error`);
-			logger.error(error);
-		}
-		return new Promise((res) => res(false));
-	};
+			this.webDriverAgentProcess = new WebDriverAgentProcess();
+			const wdaStartStatus = await this.webDriverAgentProcess.start(this.udid);
 
-	startTunnel = async (udid: string) => {
+			if (!wdaStartStatus) {
+				return false;
+			}
+
+			this.port = this.webDriverAgentProcess.port;
+			this.mjpegPort = this.webDriverAgentProcess.mjpegPort;
+
+			if (this.port === undefined || this.mjpegPort === undefined) {
+				await this.stopWebDriverAgent();
+				return false;
+			}
+
+			this.tunnelManager = new TunnelManager(this.port, this.mjpegPort);
+			const tunnelStartStatus = await this.tunnelManager.startTunnel(this.udid);
+			if (!tunnelStartStatus) {
+				await this.stopWebDriverAgent();
+				return false;
+			}
+
+			const mjpegTunnelStatus = await this.tunnelManager.startMjpegTunnel(this.udid);
+			if (!mjpegTunnelStatus) {
+				await this.stopWebDriverAgent();
+				return false;
+			}
+
+			return true;
+		} catch (error: unknown) {
+			logger.error("Error starting WebDriverAgent:", error);
+			return false;
+		}
+	}
+
+	async stopWebDriverAgent(): Promise<void> {
 		try {
-			const args = ["forward", `--udid=${udid}`, `${this.port}`, `${this.port}`];
-			this.webDriverAgentProcess = new SubProcess(APP_ENV.GO_IOS, args);
-			this.webDriverAgentProcess.on("die", this.onTunnelDie);
-			await this.webDriverAgentProcess.start(0);
-			return new Promise((res) => res(true));
-		} catch (error: Error | any) {
-			logger.error(`Webdriveragent tunnel process start error`);
-			logger.error(error);
+			await this.webDriverAgentProcess?.stop();
+			await this.tunnelManager?.stopTunnels();
+		} catch (error: unknown) {
+			logger.error("Failed to stop WebDriverAgent process:", error);
+		} finally {
+			this.cleanupEventListeners();
 		}
-		return new Promise((res) => res(false));
-	};
+	}
 
-	stopWebDriverAgent = async () => {
-		try {
-			this.webDriverAgentProcess?.stop("SIGINT");
-		} catch (error: Error | any) {
-			logger.error(`Webdriveragent process stop error`);
-			logger.error(error);
-		}
-	};
-
-	onProcessDie = async (code: number, signal: NodeJS.Signals) => {
-		console.log(`WebDriverAgent process died ${code} ${signal}`);
-	};
-
-	onTunnelDie = async (code: number, signal: NodeJS.Signals) => {
-		console.log(`WebDriverAgent tunnel process died ${code} ${signal}`);
-	};
+	private cleanupEventListeners(): void {
+		this.webDriverAgentProcess?.removeListeners();
+		this.tunnelManager?.removeListeners();
+	}
 }
 
 export { WebDriverAgent };
