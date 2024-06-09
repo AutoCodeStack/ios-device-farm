@@ -1,14 +1,14 @@
 import { EventEmitter } from "events";
 import { SubProcess } from "teen_process";
-import { go_ios_path } from "../../utils/path.utils";
 import { Convert, DeviceConnectEvent } from "../../schema/device";
+import { APP_ENV } from "../../config/config";
 
 class DeviceDetector extends EventEmitter {
 	private listenProcess: SubProcess;
 
 	constructor() {
 		super();
-		this.listenProcess = new SubProcess(go_ios_path, ["listen"]);
+		this.listenProcess = new SubProcess(APP_ENV.GO_IOS, ["listen"]);
 	}
 
 	public startDeviceListen = async (): Promise<void> => {

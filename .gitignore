@@ -130,3 +130,6 @@ build
 .yarn/install-state.gz
 .pnp.*
 
+#external
+ext
+

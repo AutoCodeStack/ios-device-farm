@@ -1,10 +1,10 @@
 import { exec } from "teen_process";
-import { go_ios_path } from "./path.utils";
 import { DeviceInfo } from "../schema/device";
+import { APP_ENV } from "../config/config";
 
 export const getDeviceInfo = async (udid: string): Promise<DeviceInfo | undefined> => {
 	try {
-		const { stdout, stderr, code } = await exec(go_ios_path, ["info", "--udid", udid]);
+		const { stdout, stderr, code } = await exec(APP_ENV.GO_IOS, ["info", "--udid", udid]);
 		const ti = JSON.parse(stdout);
 		return new Promise((res) =>
 			res({

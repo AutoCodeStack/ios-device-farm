@@ -2,7 +2,8 @@ import { Session } from "./types/session";
 import { WdaService } from "./wda-service/service";
 import { HttpMethod, WdaEndpoints } from "./wda-service/wda-endpoints";
 import { WdaCommands } from "./types/command";
-import logger from "../../config/logger";
+import logger from "../../../config/logger";
+import { SubProcess } from "teen_process";
 
 class WdaControl {
 	service: WdaService;

@@ -1,5 +1,5 @@
 import { Convert, Device, DeviceConnectEvent } from "../../schema/device";
-import { getDeviceInfo } from "../../utils/idf.goios";
+import { getDeviceInfo } from "../../utils/goios.utils";
 import DeviceDetector from "./device.detector";
 import logger from "../../config/logger";
 
@@ -13,6 +13,7 @@ class DeviceManager {
 		this.detector = new DeviceDetector();
 		this.setupListeners();
 		this.detector.startDeviceListen();
+		logger.info(`Device Manager init successful`);
 	}
 
 	private setupListeners(): void {
@@ -31,9 +32,7 @@ class DeviceManager {
 				logger.warn(`No device info found for serial number: ${addEvent.Properties.SerialNumber}`);
 			}
 		} catch (error) {
-			logger.error(
-				`Failed to add device with serial number ${addEvent.Properties.SerialNumber}: ${error}`
-			);
+			logger.error(`Failed to add device with serial number ${addEvent.Properties.SerialNumber}: ${error}`);
 		}
 	};
 
@@ -49,6 +48,18 @@ class DeviceManager {
 		} catch (error) {
 			logger.error(`Failed to delete device with ID ${deleteEvent.DeviceID}: ${error}`);
 		}
+	};
+
+	public getDevices = async () => {
+		return Array.from(this.devices.values());
+	};
+
+	public getDevice = (udid: string): Device | undefined => {
+		const allDevices = Array.from(this.devices.values());
+		const device = allDevices.find((item: Device) => {
+			item.udid === udid;
+		});
+		return device;
 	};
 }
 
