@@ -13,6 +13,10 @@ class WebDriverAgent {
 		this.udid = udid;
 	}
 
+	get mjpegPortNumber() {
+		return this.mjpegPort ?? 9100;
+	}
+
 	async start(): Promise<boolean> {
 		try {
 			this.webDriverAgentProcess = new WebDriverAgentProcess();

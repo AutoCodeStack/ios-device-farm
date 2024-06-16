@@ -12,5 +12,5 @@
 		"resolveJsonModule": true
 	},
 	"exclude": ["node_modules", "public", "test", "ext"],
-	"include": ["src/**/*", "global.d.ts"]
+	"include": ["src/**/*"]
 }

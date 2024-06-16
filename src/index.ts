@@ -1,6 +1,4 @@
-import logger from "./config/logger";
 import DeviceManager from "./modules/device-management/device.manager";
-import { WebDriverAgent } from "./modules/wda/procs/webdriveragent";
 import WDA from "./modules/wda/wda";
 import "./server/server";
 

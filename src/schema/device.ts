@@ -1,10 +1,12 @@
 import { getDeviceName } from "../utils/device.utils";
+import { Status } from "./status";
 
 export type Device = {
 	id: number;
 	name: string;
 	udid: string;
 	version: string;
+	status: Status;
 };
 
 export type DeviceInfo = {
@@ -48,6 +50,7 @@ export class Convert {
 			name: deviceName ?? "iPhone",
 			udid: connectEvent.Properties.SerialNumber,
 			version: info.ProductVersion,
+			status: Status.AVAILABLE,
 		};
 		return device;
 	}

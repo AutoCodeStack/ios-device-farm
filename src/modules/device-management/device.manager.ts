@@ -2,6 +2,8 @@ import { Convert, Device, DeviceConnectEvent } from "../../schema/device";
 import { getDeviceInfo } from "../../utils/goios.utils";
 import DeviceDetector from "./device.detector";
 import logger from "../../config/logger";
+import { Status } from "../../schema/status";
+import { stat } from "fs";
 
 class DeviceManager {
 	private devices: Map<number, Device>;
@@ -57,10 +59,18 @@ class DeviceManager {
 	public getDevice = (udid: string): Device | undefined => {
 		const allDevices = Array.from(this.devices.values());
 		const device = allDevices.find((item: Device) => {
-			item.udid === udid;
+			return item.udid === udid;
 		});
 		return device;
 	};
+
+	public changeDeviceStatus(index: number, status: Status) {
+		var device = this.devices.get(index);
+		if (device) {
+			device.status = status;
+			this.devices.set(index, device);
+		}
+	}
 }
 
 export default DeviceManager;

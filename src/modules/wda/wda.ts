@@ -2,13 +2,17 @@ import { Device } from "../../schema/device";
 import logger from "../../config/logger";
 import { WebDriverAgent } from "./procs/webdriveragent";
 import { WdaControl } from "./control/wda-control";
+import MjpegStreamSocketClient from "./stream/mjpeg.tcp";
+import { EventEmitter } from "stream";
 
-class WDA {
+class WDA extends EventEmitter {
 	private webDriverAgent: WebDriverAgent;
 	private device: Device;
 	private wdaControl?: WdaControl;
+	private wdaStream?: MjpegStreamSocketClient;
 
 	constructor(device: Device) {
+		super();
 		this.device = device;
 		this.webDriverAgent = new WebDriverAgent(device.udid);
 	}
@@ -22,6 +26,10 @@ class WDA {
 			const started = await this.webDriverAgent.start();
 			if (started) {
 				this.wdaControl = new WdaControl(this.webDriverAgent.port ?? 8100);
+				this.wdaStream = new MjpegStreamSocketClient("localhost", this.webDriverAgent.mjpegPortNumber);
+				this.wdaStream.on("data", (data: Buffer) => {
+					this.emit("imageFrame", data);
+				});
 			}
 			return started;
 		} catch (error) {
@@ -30,35 +38,13 @@ class WDA {
 		}
 	}
 
-	// #1 start the webdriveragent
-	private async startWebDriverAgent(): Promise<void> {
-		console.log(`Starting WebDriverAgent on device: ${this.device.name}`);
-		return new Promise((resolve) => setTimeout(resolve, 2000));
-	}
-
 	public async stop(): Promise<void> {
 		try {
-			console.log(`Stopping WebDriverAgent on device: ${this.device.name}`);
-			await this.stopWebDriverAgent();
-			console.log(`Stopped WebDriverAgent on device: ${this.device.name}`);
+			await this.webDriverAgent.stopWebDriverAgent();
 		} catch (error) {
 			console.error(`Failed to stop WebDriverAgent on device: ${this.device.name}`, error);
 		}
 	}
-
-	private async stopWebDriverAgent(): Promise<void> {
-		console.log(`Stopping WebDriverAgent on device: ${this.device.name}`);
-		return new Promise((resolve) => setTimeout(resolve, 2000));
-	}
 }
-
-/**
- * WDA
- * write basic functions
- * write nodejs typescript code where  a class WDA need to be created and it has following responsibilites
- * initilaize with a device object (device will contain udid, name, version)
- * a method to connect with a device and invote WebDriverAgent installed on iphone
- * a method to stop WebDriverAgent on iPhone
- * */
 
 export default WDA;

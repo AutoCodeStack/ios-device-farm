@@ -2,7 +2,6 @@ import { Server, Socket } from "socket.io";
 import * as http from "http";
 import logger from "../config/logger";
 import { onCommand, onDestroy, onPrepare } from "./client.handler";
-import { IDF } from "..";
 
 let socket: Server;
 
@@ -32,4 +31,5 @@ export const onConnection = (socket: Socket) => {
 export const serverError = (err: Error) => {
 	logger.error("socker error occured");
 	logger.error(err);
+	socket.removeAllListeners();
 };

@@ -1,102 +1,66 @@
-import { Socket } from "net";
-import ws from "ws";
+import * as net from "net";
+import { EventEmitter } from "events";
+import MjpegParser from "./mjpeg.parser";
+import fs from "fs";
 
-class TcpClient {
-	private socket: Socket;
+class MjpegStreamSocketClient extends EventEmitter {
 	private host: string;
 	private port: number;
-	private buffer: Buffer = Buffer.alloc(0);
-	private frameStart: number = 0;
+	private reconnectInterval: number;
+	private client: net.Socket | null = null;
+	private consumer: MjpegParser;
 
-	constructor(host: string, port: number) {
+	constructor(host: string, port: number, reconnectInterval: number = 5000) {
+		super();
 		this.host = host;
 		this.port = port;
-		this.socket = new Socket();
+		this.reconnectInterval = reconnectInterval;
+		this.consumer = new MjpegParser();
 	}
 
-	async connect(): Promise<void> {
-		return new Promise((resolve, reject) => {
-			this.socket.on("connect", () => {
-				console.log(`Connected to ${this.host}:${this.port}`);
-				this.socket.write("data", (error) => {
-					resolve();
-				});
-			});
-			this.socket.on("error", (error) => {
-				reject(error);
-			});
-			this.socket.connect(this.port, this.host);
-		});
-	}
-
-	// async sendData(data: string): Promise<void> {
-	// 	if (!this.socket) {
-	// 		throw new Error("Not connected");
-	// 	}
-	// 	return new Promise((resolve, reject) => {
-	// 		this.socket?.write(data, (error) => {
-	// 			if (error) {
-	// 				reject(error);
-	// 			} else {
-	// 				console.log(`Data sent: ${data}`);
-	// 				resolve();
-	// 			}
-	// 		});
-	// 	});
-	// }
-
-	async receiveData(wss: ws.WebSocket): Promise<string> {
-		if (!this.socket) {
-			throw new Error("Not connected");
+	// Method to connect to the server
+	connect() {
+		if (this.client) {
+			this.client.destroy(); // Clean up any existing connection
 		}
 
-		return new Promise((resolve, reject) => {
-			let data = "";
+		this.client = new net.Socket();
 
-			this.socket.on("data", (chunk) => {
-				if (wss.readyState === ws.WebSocket.OPEN) {
-					console.log("sending data", chunk.length);
-					// wss.send(frame.data);
-				}
-			});
-
-			this.socket.on("end", () => {
-				resolve(data);
-			});
-
-			this.socket.on("error", (error) => {
-				reject(error);
-			});
-		});
-	}
-
-	async close(): Promise<void> {
-		if (!this.socket) {
-			return;
-		}
-		return new Promise((resolve, reject) => {
-			this.socket.destroy();
-			resolve();
-		});
-	}
-
-	private parseMetadata(header: string): { [key: string]: string } {
-		const lines = header.split("\r\n");
-		const metadata: { [key: string]: string } = {};
-		for (const line of lines) {
-			const parts = line.split(": ");
-			if (parts.length === 2) {
-				metadata[parts[0].trim()] = parts[1].trim();
+		this.client.connect(this.port, this.host, () => {
+			console.log(`Connected to server at ${this.host}:${this.port}`);
+			if (this.client) {
+				this.client.write("hello");
 			}
+			this.emit("connected");
+		});
+
+		this.client.pipe(this.consumer).on("data", (data: Buffer) => {
+			this.emit("data", data);
+		});
+
+		this.client.on("error", (err: Error) => {
+			console.error("Error:", err.message);
+			this.emit("error", err);
+			this.client?.destroy();
+			setTimeout(() => this.connect(), this.reconnectInterval);
+		});
+
+		this.client.on("close", () => {
+			console.log("Connection closed");
+			this.emit("close");
+			setTimeout(() => this.connect(), this.reconnectInterval);
+		});
+	}
+
+	// Method to disconnect from the server
+	disconnect() {
+		if (this.client) {
+			this.client.destroy();
+			this.client = null;
+			console.log("Client disconnected manually");
+			this.emit("disconnected");
 		}
-		return metadata;
 	}
 }
 
-export default TcpClient;
-
-interface MjpegFrame {
-	header: string;
-	data: Buffer;
-	metadata: { [key: string]: string };
-}
+export default MjpegStreamSocketClient;

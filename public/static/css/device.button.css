@@ -1,0 +1,17 @@
+/* Include the CSS here */
+.deviceButtonGroup {
+	transition: all 0.2s ease; /* Smooth transitions for all changes */
+	outline: none; /* Remove the default focus outline */
+	height: 50px;
+	width: 100%;
+}
+
+.deviceButtonGroup:active {
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* Smaller shadow to simulate press */
+	transform: scale(0.98); /* Slightly scale down to give a press effect */
+}
+
+.deviceButtonGroup:focus {
+	box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.5); /* Outline for focus indication */
+	transform: translateY(-1px); /* Slight lift effect on focus */
+}

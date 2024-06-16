@@ -2,6 +2,7 @@ import { Socket } from "socket.io";
 import { IDF, deviceManager } from "..";
 import WDA from "../modules/wda/wda";
 import logger from "../config/logger";
+import fs from "fs";
 
 const onCommand = (data: any, callback: Function) => {};
 
@@ -20,6 +21,11 @@ const onPrepare = async (socket: Socket, data: any, callback: Function) => {
 				 */
 				await wda.start();
 				logger.info(`started wda successfully`);
+
+				// wda.on("imageFrame", (data: Buffer) => {
+				// 	fs.writeFile(process.cwd() + `/images/${Date.now()}.jpeg`, data, () => {});
+				// });
+
 				callback(sock_response(true, "successfully created client"));
 				return;
 			} else {
