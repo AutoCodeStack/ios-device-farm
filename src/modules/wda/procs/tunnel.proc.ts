@@ -16,10 +16,11 @@ class TunnelManager {
 	async startTunnel(udid: string): Promise<boolean> {
 		try {
 			const args = ["forward", `--udid=${udid}`, `${this.port}`, `${this.port}`];
+			const match = `Start listening on port ${this.port} forwarding to port ${this.port} on device`;
 			this.tunnelProcess = new SubProcess(APP_ENV.GO_IOS, args);
 			this.tunnelProcess.on("die", this.onTunnelDie);
-
-			await this.tunnelProcess.start(0);
+			const successDetector = (stdout: string, stderr: string) => stderr.includes(match);
+			await this.tunnelProcess.start(successDetector, 60000);
 			logger.info(`Tunnel started for WebDriverAgent on port ${this.port}`);
 			return true;
 		} catch (error: unknown) {
@@ -31,9 +32,11 @@ class TunnelManager {
 	async startMjpegTunnel(udid: string): Promise<boolean> {
 		try {
 			const args = ["forward", `--udid=${udid}`, `${this.mjpegPort}`, `${this.mjpegPort}`];
+			const match = `Start listening on port ${this.mjpegPort} forwarding to port ${this.mjpegPort} on device`;
 			this.mjpegTunnelProcess = new SubProcess(APP_ENV.GO_IOS, args);
 			this.mjpegTunnelProcess.on("die", this.onTunnelDie);
-			await this.mjpegTunnelProcess.start(0);
+			const successDetector = (stdout: string, stderr: string) => stderr.includes(match);
+			await this.mjpegTunnelProcess.start(successDetector, 60000);
 			logger.info(`Mjpeg Tunnel started for WebDriverAgent on port ${this.mjpegPort}`);
 			return true;
 		} catch (error: unknown) {

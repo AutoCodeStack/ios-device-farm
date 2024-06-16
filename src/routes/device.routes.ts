@@ -6,7 +6,7 @@ import { deviceManager } from "..";
 
 const deviceRoute = Router();
 
-deviceRoute.get("/device/list", async (req: Request, res: Response) => {
+deviceRoute.get("/list", async (req: Request, res: Response) => {
 	try {
 		const devices = await deviceManager.getDevices();
 		if (devices) {
@@ -19,6 +19,22 @@ deviceRoute.get("/device/list", async (req: Request, res: Response) => {
 	}
 	res.status(200).send({ devices: [] });
 	return;
+});
+
+deviceRoute.put("/status/:udid/:status", async (req: Request, res: Response) => {
+	try {
+		const udid = req.params.udid;
+		const status = req.params.status as unknown as number;
+		const device = deviceManager.getDevice(udid);
+		if (device && device.status !== 1) {
+			deviceManager.changeDeviceStatus(device.id, status);
+			res.send({ status: true }).status(200);
+			return;
+		}
+	} catch (error) {
+		logger.error(error);
+	}
+	res.send("").status(400);
 });
 
 export default deviceRoute;

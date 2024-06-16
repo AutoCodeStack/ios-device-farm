@@ -69,7 +69,7 @@ class MjpegParser extends Transform {
 		this.reading = false;
 		if (this.buffer) {
 			sharp(this.buffer)
-				.jpeg({ quality: 65 })
+				.jpeg({ quality: 50 })
 				.toBuffer()
 				.then((data: Buffer) => {
 					this.push(data);

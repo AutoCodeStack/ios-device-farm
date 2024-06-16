@@ -5,14 +5,13 @@ import { WdaControl } from "./control/wda-control";
 import MjpegStreamSocketClient from "./stream/mjpeg.tcp";
 import { EventEmitter } from "stream";
 
-class WDA extends EventEmitter {
+class WDA {
 	private webDriverAgent: WebDriverAgent;
 	private device: Device;
 	private wdaControl?: WdaControl;
 	private wdaStream?: MjpegStreamSocketClient;
 
 	constructor(device: Device) {
-		super();
 		this.device = device;
 		this.webDriverAgent = new WebDriverAgent(device.udid);
 	}
@@ -21,15 +20,15 @@ class WDA extends EventEmitter {
 		return this.device;
 	}
 
-	public async start(): Promise<boolean> {
+	public async start(imageFrame: any): Promise<boolean> {
 		try {
 			const started = await this.webDriverAgent.start();
 			if (started) {
 				this.wdaControl = new WdaControl(this.webDriverAgent.port ?? 8100);
-				this.wdaStream = new MjpegStreamSocketClient("localhost", this.webDriverAgent.mjpegPortNumber);
-				this.wdaStream.on("data", (data: Buffer) => {
-					this.emit("imageFrame", data);
-				});
+				this.wdaStream = new MjpegStreamSocketClient(this.webDriverAgent.mjpegPortNumber);
+				this.wdaStream.on("data", imageFrame);
+				await this.wdaStream.connect();
+				await this.wdaStream.startProcessing();
 			}
 			return started;
 		} catch (error) {
@@ -42,7 +41,23 @@ class WDA extends EventEmitter {
 		try {
 			await this.webDriverAgent.stopWebDriverAgent();
 		} catch (error) {
-			console.error(`Failed to stop WebDriverAgent on device: ${this.device.name}`, error);
+			logger.error(`Failed to stop WebDriverAgent on device: ${this.device.name}`, error);
+		}
+
+		try {
+			await this.wdaControl?.deleteWdaSession();
+		} catch (error) {
+			logger.error(`Failed to stop wdaControl on device: ${this.device.name}`, error);
+		}
+
+		try {
+			await this.wdaStream?.disconnect();
+		} catch (error) {
+			logger.error(`Failed to stop wdaStream on device: ${this.device.name}`, error);
+		} finally {
+			if (this.wdaStream) {
+				this.wdaStream.removeAllListeners();
+			}
 		}
 	}
 }

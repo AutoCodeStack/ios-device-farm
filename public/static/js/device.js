@@ -1,3 +1,13 @@
+const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+// const viewPortWidth = urlParams.get("width");
+// const viewPortHeight = urlParams.get("height");
+
+const udid = urlParams.get("udid");
+if (udid === undefined || udid === null) {
+	window.location.assign("../index.html");
+}
+
 const ratio = 414 / 896;
 var canvasHeight = window.innerHeight - 100;
 var canvasWidth = canvasHeight * ratio;
@@ -22,6 +32,7 @@ canvas.style.height = `${canvasHeight}px`;
 
 $(function () {
 	showLoader("Preparing Device");
+	connect(udid);
 });
 
 function showLoader(text) {

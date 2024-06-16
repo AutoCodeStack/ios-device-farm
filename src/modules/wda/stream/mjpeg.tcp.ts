@@ -1,64 +1,87 @@
-import * as net from "net";
+import net from "net";
 import { EventEmitter } from "events";
 import MjpegParser from "./mjpeg.parser";
-import fs from "fs";
 
 class MjpegStreamSocketClient extends EventEmitter {
-	private host: string;
 	private port: number;
-	private reconnectInterval: number;
 	private client: net.Socket | null = null;
-	private consumer: MjpegParser;
+	private consumer = new MjpegParser();
 
-	constructor(host: string, port: number, reconnectInterval: number = 5000) {
-		super();
-		this.host = host;
+	constructor(port: number) {
+		super(); // Call the EventEmitter constructor
 		this.port = port;
-		this.reconnectInterval = reconnectInterval;
-		this.consumer = new MjpegParser();
 	}
 
-	// Method to connect to the server
-	connect() {
+	// Method to connect to the server using async/await
+	async connect(): Promise<void> {
 		if (this.client) {
 			this.client.destroy(); // Clean up any existing connection
 		}
 
 		this.client = new net.Socket();
 
-		this.client.connect(this.port, this.host, () => {
-			console.log(`Connected to server at ${this.host}:${this.port}`);
-			if (this.client) {
-				this.client.write("hello");
-			}
-			this.emit("connected");
-		});
+		try {
+			// Await the connection
+			await new Promise<void>((resolve, reject) => {
+				this.client?.connect({ port: this.port }, resolve);
+				this.client?.on("error", reject);
+			});
 
-		this.client.pipe(this.consumer).on("data", (data: Buffer) => {
-			this.emit("data", data);
-		});
+			// Send initial message or perform initial action
+			this.client.write("hello");
 
-		this.client.on("error", (err: Error) => {
-			console.error("Error:", err.message);
-			this.emit("error", err);
+			// Listen for data and emit events
+			this.client.pipe(this.consumer).on("data", (data: Buffer) => {
+				this.emit("data", data); // Emit data for async processing
+			});
+
+			console.log("Connected successfully");
+		} catch (err) {
+			console.error("Connection error:", (err as Error).message);
 			this.client?.destroy();
-			setTimeout(() => this.connect(), this.reconnectInterval);
-		});
+			throw err;
+		}
+	}
 
-		this.client.on("close", () => {
-			console.log("Connection closed");
-			this.emit("close");
-			setTimeout(() => this.connect(), this.reconnectInterval);
+	// Method to wait for the first chunk of data
+	async waitForFirstData(): Promise<Buffer> {
+		if (!this.client) {
+			throw new Error("Client is not connected");
+		}
+
+		return new Promise<Buffer>((resolve, reject) => {
+			this.once("data", resolve); // Resolve with the first data chunk received
+			this.once("error", reject); // Reject on error
+			this.once("close", () => reject(new Error("Connection closed"))); // Reject if the connection is closed
 		});
 	}
 
+	// Method to start processing data
+	async startProcessing(): Promise<void> {
+		try {
+			const firstData = await this.waitForFirstData();
+			console.log("tcp fetch started");
+			// Here you can handle the first chunk of data or start continuous processing
+		} catch (err) {
+			console.error("Failed to start processing:", (err as Error).message);
+			throw err;
+		}
+	}
+
+	// Method to handle the continuous data stream
+	async handleContinuousStream(callback: (data: Buffer) => void): Promise<void> {
+		if (!this.client) {
+			throw new Error("Client is not connected");
+		}
+		this.on("data", callback); // Register the callback to handle each data chunk
+	}
+
 	// Method to disconnect from the server
-	disconnect() {
+	async disconnect(): Promise<void> {
 		if (this.client) {
 			this.client.destroy();
 			this.client = null;
 			console.log("Client disconnected manually");
-			this.emit("disconnected");
 		}
 	}
 }

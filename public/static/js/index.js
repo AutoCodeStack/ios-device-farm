@@ -3,11 +3,11 @@ const devicePage = "/device.html?udid=";
 $(() => {
 	setInterval(() => {
 		getDevices();
-	}, 1000);
+	}, 2000);
 });
 
 function getDevices() {
-	const devicesListUri = "http://localhost:9000/api/devices";
+	const devicesListUri = "http://localhost:9000/api/device/list";
 
 	$.ajax({
 		url: devicesListUri,
@@ -67,5 +67,5 @@ function redirectToControl(element) {
 	var $row = $(element).closest("tr");
 	var $udid = $row.find(".udid").text();
 	const uri = devicePage + $udid;
-	window.location.assign(devicePage + $udid);
+	window.open(devicePage + $udid, "_blank").focus();
 }
