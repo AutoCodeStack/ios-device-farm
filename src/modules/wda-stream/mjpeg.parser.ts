@@ -2,7 +2,6 @@
 import { Transform, TransformCallback, TransformOptions } from "stream";
 import { Buffer } from "buffer";
 import sharp from "sharp";
-import logger from "../../../config/logger";
 
 // Regex to find the Content-Length header in the HTTP response
 const lengthRegex = /Content-Length:\s*(\d+)/i;

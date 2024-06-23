@@ -1,5 +1,5 @@
 import DeviceManager from "./modules/device-management/device.manager";
-import WDA from "./modules/wda/wda";
+import IDF from "./modules/idf";
 import "./server/server";
 
 /**
@@ -7,10 +7,10 @@ import "./server/server";
  * It requires to persist data of connected devices
  * and its processes
  */
-export var IDF = {
-	client_map: new Map<string, WDA>(),
+export var IDFMap = {
+	client_map: new Map<string, IDF>(),
 };
-IDF.client_map = new Map();
+IDFMap.client_map = new Map();
 
 /**
  * Maintain only one device manager

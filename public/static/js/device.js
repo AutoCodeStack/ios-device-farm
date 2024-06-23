@@ -47,3 +47,12 @@ function hideLoader() {
 	$(".loader").css("display", "none");
 	$("#main").css("display", "block");
 }
+
+$("#screen").on("hoverstart", () => {
+	console.log("hoverstart");
+	$(this).css("cursor", "url(/Users/asolanki/Desktop/rand.jpeg), auto");
+});
+$("#screen").on("hoverend", () => {
+	console.log("hoverend");
+	$(this).css("cursor", "auto");
+});

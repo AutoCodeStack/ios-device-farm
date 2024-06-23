@@ -1,29 +1,26 @@
 import net from "net";
 import { EventEmitter } from "events";
 import MjpegParser from "./mjpeg.parser";
+import logger from "../../config/logger";
 
-class MjpegStreamSocketClient extends EventEmitter {
-	private port: number;
+class WdaStreamClient extends EventEmitter {
 	private client: net.Socket | null = null;
 	private consumer = new MjpegParser();
 
-	constructor(port: number) {
+	constructor() {
 		super(); // Call the EventEmitter constructor
-		this.port = port;
 	}
 
-	// Method to connect to the server using async/await
-	async connect(): Promise<void> {
+	async connect(connectPort: number): Promise<void> {
 		if (this.client) {
 			this.client.destroy(); // Clean up any existing connection
 		}
 
 		this.client = new net.Socket();
-
 		try {
 			// Await the connection
 			await new Promise<void>((resolve, reject) => {
-				this.client?.connect({ port: this.port }, resolve);
+				this.client?.connect({ port: connectPort }, resolve);
 				this.client?.on("error", reject);
 			});
 
@@ -35,7 +32,7 @@ class MjpegStreamSocketClient extends EventEmitter {
 				this.emit("data", data); // Emit data for async processing
 			});
 
-			console.log("Connected successfully");
+			logger.info("Connected successfully");
 		} catch (err) {
 			console.error("Connection error:", (err as Error).message);
 			this.client?.destroy();
@@ -43,7 +40,6 @@ class MjpegStreamSocketClient extends EventEmitter {
 		}
 	}
 
-	// Method to wait for the first chunk of data
 	async waitForFirstData(): Promise<Buffer> {
 		if (!this.client) {
 			throw new Error("Client is not connected");
@@ -56,19 +52,16 @@ class MjpegStreamSocketClient extends EventEmitter {
 		});
 	}
 
-	// Method to start processing data
 	async startProcessing(): Promise<void> {
 		try {
 			const firstData = await this.waitForFirstData();
-			console.log("tcp fetch started");
-			// Here you can handle the first chunk of data or start continuous processing
+			logger.info("tcp fetch started");
 		} catch (err) {
 			console.error("Failed to start processing:", (err as Error).message);
 			throw err;
 		}
 	}
 
-	// Method to handle the continuous data stream
 	async handleContinuousStream(callback: (data: Buffer) => void): Promise<void> {
 		if (!this.client) {
 			throw new Error("Client is not connected");
@@ -76,14 +69,12 @@ class MjpegStreamSocketClient extends EventEmitter {
 		this.on("data", callback); // Register the callback to handle each data chunk
 	}
 
-	// Method to disconnect from the server
 	async disconnect(): Promise<void> {
 		if (this.client) {
 			this.client.destroy();
 			this.client = null;
-			console.log("Client disconnected manually");
 		}
 	}
 }
 
-export default MjpegStreamSocketClient;
+export { WdaStreamClient };

@@ -1,11 +1,9 @@
-import { Session } from "./types/session";
-import { WdaService } from "./wda-service/service";
-import { HttpMethod, WdaEndpoints } from "./wda-service/wda-endpoints";
-import { WdaCommands } from "./types/command";
-import logger from "../../../config/logger";
-import { SubProcess } from "teen_process";
+import logger from "../../config/logger";
+import { Command, Session, WdaCommands } from "../../schema/wda.types";
+import { HttpMethod, WdaEndpoints } from "./wda-endpoints";
+import { WdaService } from "./wda-service";
 
-class WdaControl {
+class WdaControlClient {
 	service: WdaService;
 	sessionId: string = "0";
 
@@ -47,14 +45,13 @@ class WdaControl {
 		}
 	}
 
-	async performCommand(command: WdaCommands, data?: any): Promise<{ success: boolean }> {
+	async performCommand(command: Command): Promise<{ success: boolean }> {
 		const params = { sessionId: this.sessionId };
 		try {
 			let endpoint: WdaEndpoints;
 			let method: HttpMethod;
-			let postData: any = data;
-
-			switch (command) {
+			let postData: any = command.values;
+			switch (command.cmd) {
 				case WdaCommands.OPEN_URL:
 					endpoint = WdaEndpoints.OPEN_URL;
 					method = HttpMethod.POST;
@@ -78,7 +75,6 @@ class WdaControl {
 			}
 
 			const response = await this.service.apiCall(endpoint, method, postData, params);
-
 			if (response.status === 200) {
 				return { success: true };
 			} else {
@@ -91,4 +87,4 @@ class WdaControl {
 	}
 }
 
-export { WdaControl };
+export { WdaControlClient };
