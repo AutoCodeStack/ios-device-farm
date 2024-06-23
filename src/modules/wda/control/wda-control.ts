@@ -32,6 +32,7 @@ class WdaControl {
 	async deleteWdaSession(): Promise<Session> {
 		try {
 			const response = await this.service.apiCall(WdaEndpoints.DELETE_SESSION, HttpMethod.DELETE, null, { sessionId: this.sessionId });
+			logger.info("WDA session deleted", response.data);
 			const session: Session = response.data;
 			if (session) {
 				return session;

@@ -9,13 +9,19 @@ $(document).ready(() => {
 	hammer.on("tap", (event) => {
 		const x = event.center.x;
 		const y = event.center.y;
-		console.log(`Canvas tapped at coordinates: (${x}, ${y})`);
+		// console.log(`Canvas tapped at coordinates: (${x}, ${y})`);
 
 		// If you need to convert coordinates to canvas space:
 		const rect = canvas.getBoundingClientRect();
 		const canvasX = x - rect.left;
 		const canvasY = y - rect.top;
 		console.log(`Canvas space coordinates: (${canvasX}, ${canvasY})`);
+
+		const scaledCoordinates = scaler(canvasWidth, canvasHeight, canvasX, canvasY, 414, 896);
+
+		socket.emit("command", { cmd: "tap", x: scaledCoordinates.xp, y: scaledCoordinates.yp });
+
+		// socket.emit("command", { cmd: "tap", x: x, y: canvasY, udid: udid });
 
 		// Add your tap handling logic here using canvasX and canvasY
 	});
@@ -37,3 +43,9 @@ $(document).ready(() => {
 		console.log(`Canvas space start coordinates: (${canvasStartX}, ${canvasStartY})`);
 	});
 });
+
+function scaler(bW, bH, x, y, rW, rH) {
+	x = (x / bW) * rW;
+	y = (y / bH) * rH;
+	return { xp: Math.floor(x), yp: Math.floor(y) };
+}

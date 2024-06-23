@@ -7,7 +7,10 @@ export const initializeSocket = (io: SocketIOServer) => {
 	io.on("connection", (socket: Socket) => {
 		logger.info("New client connected", socket.id);
 
-		socket.on("command", handleCommand);
+		socket.on("command", async (data: any, callback: Function) => {
+			await handleCommand(socket, data, callback);
+		});
+
 		socket.on("devicePrepare", async (data: any, callback: Function) => {
 			await handleDevicePrepare(socket, data, callback);
 		});

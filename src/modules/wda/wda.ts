@@ -3,7 +3,7 @@ import logger from "../../config/logger";
 import { WebDriverAgent } from "./procs/webdriveragent";
 import { WdaControl } from "./control/wda-control";
 import MjpegStreamSocketClient from "./stream/mjpeg.tcp";
-import { EventEmitter } from "stream";
+import { WdaCommands } from "./control/types/command";
 
 class WDA {
 	private webDriverAgent: WebDriverAgent;
@@ -20,6 +20,13 @@ class WDA {
 		return this.device;
 	}
 
+	public async sendCommand(data: any): Promise<void> {
+		if (this.wdaControl) {
+			logger.info(`Sending command: ${data}`);
+			await this.wdaControl.performCommand(WdaCommands.TAP, { x: data.x, y: data.y });
+		}
+	}
+
 	public async start(imageFrame: any): Promise<boolean> {
 		try {
 			const started = await this.webDriverAgent.start();
@@ -29,6 +36,7 @@ class WDA {
 				this.wdaStream.on("data", imageFrame);
 				await this.wdaStream.connect();
 				await this.wdaStream.startProcessing();
+				await this.wdaControl.createWdaSession();
 			}
 			return started;
 		} catch (error) {
