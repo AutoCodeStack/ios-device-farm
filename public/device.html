@@ -12,6 +12,8 @@
 		<link rel="stylesheet" type="text/css" href="./static/css/device.button.css" />
 	</head>
 	<body style="background-color: #2a2a2a">
+		<div id="circularcursor"></div>
+
 		<div class="loader-background" style="display: block; text-align: center">
 			<div class="loader" style="display: block"></div>
 			<h2 id="loader-text" style="color: white; display: block; position: relative; top: 20px; font-weight: 100">Loading...</h2>
@@ -102,7 +104,7 @@
 							<h6 class="textPadding primaryText">iPhone 11 Pro Max · 16.5</h6>
 						</div>
 						<div class="g-col-6 centerAlign">
-							<canvas id="screen" style="vertical-align: bottom"></canvas>
+							<canvas id="screen" style="vertical-align: bottom" class="magic-hover"></canvas>
 						</div>
 						<div class="col nopadding">
 							<div class="row nopadding">
@@ -112,7 +114,7 @@
 									</button>
 								</div>
 								<div class="col nopadding">
-									<button type="button" class="btn bg-primary border-left brc w-100 deviceButtonGroup" onclick="actionHomeButton()">
+									<button type="button" class="btn bg-primary border-left brc w-100 deviceButtonGroup" onclick="homeButtonClick()">
 										<i class="fa fa-solid fa-circle" style="font-size: 30px; color: white"></i>
 									</button>
 								</div>
@@ -167,6 +169,7 @@
 		<script src="https://kit.fontawesome.com/f4cff933f2.js" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
 		<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+		<script type="text/javascript" src="https://res.cloudinary.com/veseylab/raw/upload/v1684982764/magicmouse-2.0.0.cdn.min.js"></script>
 
 		<!-- custom js -->
 		<script type="text/javascript" src="./static/js/device.js"></script>
@@ -176,5 +179,6 @@
 		<script type="text/javascript" src="./static/js/renderer/pipeline.js"></script>
 		<script type="text/javascript" src="./static/js/socket/socket.io.js"></script>
 		<script type="text/javascript" src="./static/js/events/canvas.events.js"></script>
+		<script type="text/javascript" src="./static/js/events/button.events.js"></script>
 	</body>
 </html>

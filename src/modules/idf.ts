@@ -123,9 +123,9 @@ class IDF {
 
 	async stop() {
 		try {
-			await this.tunnelManager.stopTunnels();
+			await this.wdaControlClient?.deleteWdaSession();
 		} catch (error) {
-			logger.error(`error in stop tunnels stopAll`, error);
+			logger.error(`error in stop wda control client deleteWdaSession`, error);
 		}
 
 		try {
@@ -141,9 +141,9 @@ class IDF {
 		}
 
 		try {
-			await this.wdaControlClient?.deleteWdaSession();
+			await this.tunnelManager.stopTunnels();
 		} catch (error) {
-			logger.error(`error in stop wda control client deleteWdaSession`, error);
+			logger.error(`error in stop tunnels stopAll`, error);
 		}
 
 		this.removeListeners();

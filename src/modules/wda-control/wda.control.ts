@@ -65,6 +65,7 @@ class WdaControlClient {
 					method = HttpMethod.POST;
 					break;
 				case WdaCommands.HOMESCREEN:
+					console.log("homescreen");
 					endpoint = WdaEndpoints.WDA_HOMESCREEN;
 					method = HttpMethod.POST;
 					postData = null; // HOMESCREEN might not require data
