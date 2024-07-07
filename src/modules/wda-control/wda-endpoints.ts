@@ -11,6 +11,7 @@ export enum WdaEndpoints {
 	ENTER_TEXT = "/session/:sessionId/wda/keys",
 	CUSTOM_TAP = "/session/:sessionId/wda/custom/tap",
 	WDA_HOMESCREEN = "/wda/homescreen",
+	SWIPE = "/session/:sessionId/wda/custom/swipe",
 }
 
 export const getEndpoint = (endpoint: WdaEndpoints, params?: Record<string, string>): string => {

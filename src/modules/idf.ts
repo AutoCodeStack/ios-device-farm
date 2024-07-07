@@ -31,6 +31,8 @@ class IDF {
 	}
 
 	async sendCommand(data: any) {
+		logger.info(`send command ${JSON.stringify(data)}`);
+
 		try {
 			if (this.wdaControlClient) {
 				const cmd = buildCommand(data);

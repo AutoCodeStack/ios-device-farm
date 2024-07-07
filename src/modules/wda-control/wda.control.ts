@@ -70,6 +70,11 @@ class WdaControlClient {
 					method = HttpMethod.POST;
 					postData = null; // HOMESCREEN might not require data
 					break;
+				case WdaCommands.SWIPE:
+					console.log("swipe");
+					endpoint = WdaEndpoints.SWIPE;
+					method = HttpMethod.POST;
+					break;
 				default:
 					logger.error("Unknown command");
 					return { success: false };

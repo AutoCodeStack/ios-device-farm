@@ -47,3 +47,10 @@ function hideLoader() {
 	$(".loader").css("display", "none");
 	$("#main").css("display", "block");
 }
+
+$("#screen").mouseenter(function () {
+	$("#screen").css("cursor", "crosshair");
+});
+$("#screen").mouseleave(function () {
+	$("#screen").css("cursor", "default");
+});

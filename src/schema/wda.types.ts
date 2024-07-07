@@ -3,6 +3,7 @@ enum WdaCommands {
 	TAP = "tap",
 	TEXT_INPUT = "text_input",
 	HOMESCREEN = "homescreen",
+	SWIPE = "swipe",
 }
 
 export const buildCommand = (data: any): Command => {
