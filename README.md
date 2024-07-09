@@ -1,6 +1,7 @@
 # ios-device-farm
 
 # WORK IN PROGRESS :construction:
+# wait for full instruction to run
 
 Project Description - goes here
 
