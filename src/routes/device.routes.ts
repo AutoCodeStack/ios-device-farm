@@ -1,6 +1,5 @@
 //verifyLogin
 import Router, { Request, Response } from "express";
-import DeviceManager from "../modules/device-management/device.manager";
 import logger from "../config/logger";
 import { deviceManager } from "..";
 

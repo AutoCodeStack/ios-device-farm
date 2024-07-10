@@ -1,15 +1,11 @@
-$(document).ready(() => {
-	$("#screen").swipe({ swipe: swipeListener, tap: tapListener });
-});
-
 function tapListener(event, target) {
 	const x = event.clientX;
 	const y = event.clientY;
 	const rect = canvas.getBoundingClientRect();
 	const canvasX = x - rect.left;
 	const canvasY = y - rect.top;
-	const scaledCoordinates = scaler(canvasWidth, canvasHeight, canvasX, canvasY, 414, 896);
-	socket.emit("command", { udid: udid, cmd: "tap", data: { x: scaledCoordinates.xp, y: scaledCoordinates.yp } });
+	const scaledCoordinates = scaler(canvasWidth, canvasHeight, canvasX, canvasY, device.width, device.height);
+	socket.emit("command", { udid: device.udid, cmd: "tap", data: { x: scaledCoordinates.xp, y: scaledCoordinates.yp } });
 }
 
 function swipeListener(event, direction, distance, duration, fingerCount, fingerData) {
@@ -20,11 +16,11 @@ function swipeListener(event, direction, distance, duration, fingerCount, finger
 	const canvasEndX = fingerData[0].end.x - rect.left;
 	const canvasEndY = fingerData[0].end.y - rect.top;
 
-	const scaledCoordinatesStart = scaler(canvasWidth, canvasHeight, canvasStartX, canvasStartY, 414, 896);
-	const scaledCoordinatesEnd = scaler(canvasWidth, canvasHeight, canvasEndX, canvasEndY, 414, 896);
+	const scaledCoordinatesStart = scaler(canvasWidth, canvasHeight, canvasStartX, canvasStartY, device.width, device.height);
+	const scaledCoordinatesEnd = scaler(canvasWidth, canvasHeight, canvasEndX, canvasEndY, device.width, device.height);
 
 	socket.emit("command", {
-		udid: udid,
+		udid: device.udid,
 		cmd: "swipe",
 		data: {
 			velocity: 0.5,

@@ -134,13 +134,38 @@ const iPadModels: DeviceMap = {
 	"iPad14,6": "iPad Pro (12.9-inch) (6th generation)",
 };
 
-const getDeviceSize = (name: string) => {
-	switch (name) {
-		case "iPhone 11":
-			return { dpr: 2, height: 896, width: 414 };
-		default:
-			return { dpr: 2, height: 896, width: 414 };
-	}
+export const getDeviceSize = (machineId: string) => {
+	return iPhoneDevicesSizes[machineId] || { dpr: 3, viewportWidth: 430, viewportHeight: 932 };
+};
+
+const iPhoneDevicesSizes: { [key: string]: any } = {
+	"iPhone8,4": { dpr: 2, viewportWidth: 320, viewportHeight: 568 }, // iPhone SE (1st Gen)
+	"iPhone12,8": { dpr: 2, viewportWidth: 375, viewportHeight: 667 }, // iPhone SE (2nd Gen)
+	"iPhone7,2": { dpr: 2, viewportWidth: 375, viewportHeight: 667 }, // iPhone 6
+	"iPhone8,1": { dpr: 2, viewportWidth: 375, viewportHeight: 667 }, // iPhone 6s
+	"iPhone9,3": { dpr: 2, viewportWidth: 375, viewportHeight: 667 }, // iPhone 7
+	"iPhone10,1": { dpr: 2, viewportWidth: 375, viewportHeight: 667 }, // iPhone 8
+	"iPhone7,1": { dpr: 3, viewportWidth: 414, viewportHeight: 736 }, // iPhone 6 Plus
+	"iPhone8,2": { dpr: 3, viewportWidth: 414, viewportHeight: 736 }, // iPhone 6s Plus
+	"iPhone9,4": { dpr: 3, viewportWidth: 414, viewportHeight: 736 }, // iPhone 7 Plus
+	"iPhone10,2": { dpr: 3, viewportWidth: 414, viewportHeight: 736 }, // iPhone 8 Plus
+	"iPhone10,3": { dpr: 3, viewportWidth: 375, viewportHeight: 812 }, // iPhone X
+	"iPhone11,2": { dpr: 3, viewportWidth: 375, viewportHeight: 812 }, // iPhone XS
+	"iPhone11,4": { dpr: 3, viewportWidth: 414, viewportHeight: 896 }, // iPhone XS Max
+	"iPhone11,8": { dpr: 2, viewportWidth: 414, viewportHeight: 896 }, // iPhone XR
+	"iPhone12,1": { dpr: 2, viewportWidth: 414, viewportHeight: 896 }, // iPhone 11
+	"iPhone12,3": { dpr: 3, viewportWidth: 375, viewportHeight: 812 }, // iPhone 11 Pro
+	"iPhone12,5": { dpr: 3, viewportWidth: 414, viewportHeight: 896 }, // iPhone 11 Pro Max
+	"iPhone13,1": { dpr: 3, viewportWidth: 360, viewportHeight: 780 }, // iPhone 12 Mini
+	"iPhone13,2": { dpr: 3, viewportWidth: 390, viewportHeight: 844 }, // iPhone 12
+	"iPhone13,3": { dpr: 3, viewportWidth: 390, viewportHeight: 844 }, // iPhone 12 Pro
+	"iPhone13,4": { dpr: 3, viewportWidth: 428, viewportHeight: 926 }, // iPhone 12 Pro Max
+	"iPhone14,4": { dpr: 3, viewportWidth: 360, viewportHeight: 780 }, // iPhone 13 Mini
+	"iPhone14,5": { dpr: 3, viewportWidth: 390, viewportHeight: 844 }, // iPhone 13
+	"iPhone14,2": { dpr: 3, viewportWidth: 393, viewportHeight: 852 }, // iPhone 14 Pro
+	"iPhone14,3": { dpr: 3, viewportWidth: 430, viewportHeight: 932 }, // iPhone 14 Pro Max
+	"iPhone15,2": { dpr: 3, viewportWidth: 393, viewportHeight: 852 }, // iPhone 15 Pro
+	"iPhone15,3": { dpr: 3, viewportWidth: 430, viewportHeight: 932 }, // iPhone 15 Pro Max
 };
 
 export function getDeviceName(machineId: string): string | undefined {

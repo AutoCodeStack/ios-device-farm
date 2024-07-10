@@ -1,5 +1,4 @@
-const devicePage = "/device.html?udid=";
-
+var devices = null;
 $(() => {
 	setInterval(() => {
 		getDevices();
@@ -15,7 +14,7 @@ function getDevices() {
 		success: function (result) {
 			const tbodyDevices = $("#tbody-devices");
 			tbodyDevices.empty(); // Clear existing device rows
-
+			devices = result.devices;
 			result.devices.forEach((device) => {
 				const { name, udid, version, status } = device;
 				const statusNumber = Number(status);
@@ -66,6 +65,9 @@ function getDevices() {
 function redirectToControl(element) {
 	var $row = $(element).closest("tr");
 	var $udid = $row.find(".udid").text();
-	const uri = devicePage + $udid;
-	window.open(devicePage + $udid, "_blank").focus();
+	const selectedDevice = devices.find((device) => device.udid == $udid);
+	const newWindow = window.open("/device.html", "_blank");
+	newWindow.addEventListener("load", () => {
+		newWindow.postMessage(selectedDevice, "*");
+	});
 }

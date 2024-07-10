@@ -1,39 +1,48 @@
-const queryString = window.location.search;
-const urlParams = new URLSearchParams(queryString);
-// const viewPortWidth = urlParams.get("width");
-// const viewPortHeight = urlParams.get("height");
-
-const udid = urlParams.get("udid");
-if (udid === undefined || udid === null) {
-	window.location.assign("../index.html");
-}
-
-const ratio = 414 / 896;
-var canvasHeight = window.innerHeight - 100;
-var canvasWidth = canvasHeight * ratio;
+var device = null;
+var ratio;
+var canvasHeight;
+var canvasWidth;
 var canvasRect;
-const DPR = window.devicePixelRatio;
+
+var pipeline = new Pipeline();
+var canvas = document.getElementById("screen");
+var renderLoop = new RenderLoop(pipeline, canvas);
+var socket = null;
+
+window.addEventListener("message", (event) => {
+	device = event.data;
+	if (device.udid === undefined || device.udid === null) {
+		window.location.assign("../index.html");
+	}
+	ratio = device.width / device.height;
+	canvasHeight = window.innerHeight - 100;
+	canvasWidth = canvasHeight * ratio;
+
+	var canvas = document.getElementById("screen");
+	canvas.width = canvasWidth * device.dpr;
+	canvas.height = canvasHeight * device.dpr;
+	canvas.style.width = `${canvasWidth}px`;
+	canvas.style.height = `${canvasHeight}px`;
+
+	initlize();
+});
 
 window.addEventListener("resize", () => {
 	canvasHeight = window.innerHeight - 100;
 	canvasWidth = canvasHeight * ratio;
-	canvas.width = canvasWidth * DPR;
-	canvas.height = canvasHeight * DPR;
+	canvas.width = canvasWidth * device.dpr;
+	canvas.height = canvasHeight * device.dpr;
 	canvas.style.width = `${canvasWidth}px`;
 	canvas.style.height = `${canvasHeight}px`;
 	canvasRect = canvas.getBoundingClientRect();
 });
 
-var canvas = document.getElementById("screen");
-canvas.width = canvasWidth * DPR;
-canvas.height = canvasHeight * DPR;
-canvas.style.width = `${canvasWidth}px`;
-canvas.style.height = `${canvasHeight}px`;
-
-$(function () {
+function initlize() {
 	showLoader("Preparing Device");
-	connect(udid);
-});
+	connect(device.udid);
+	$("#device_name").text(device.name);
+	$("#screen").swipe({ swipe: swipeListener, tap: tapListener });
+}
 
 function showLoader(text) {
 	$(".loader-background").css("display", "block");

@@ -29,7 +29,7 @@ class DeviceManager {
 			if (deviceInfo) {
 				const device: Device = Convert.toDevice(deviceInfo, addEvent);
 				this.devices.set(device.id, device);
-				logger.info(`Device added: ${device.id}`);
+				logger.info(`Device added: ${JSON.stringify(device)}`);
 			} else {
 				logger.warn(`No device info found for serial number: ${addEvent.Properties.SerialNumber}`);
 			}

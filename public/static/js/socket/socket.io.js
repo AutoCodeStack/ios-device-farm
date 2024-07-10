@@ -1,14 +1,3 @@
-var pipeline = new Pipeline();
-var canvas = document.getElementById("screen");
-canvas.width = canvasWidth * DPR;
-canvas.height = canvasHeight * DPR;
-canvas.style.width = `${canvasWidth}px`;
-canvas.style.height = `${canvasHeight}px`;
-
-var renderLoop = new RenderLoop(pipeline, canvas);
-var socket = null;
-var canvasRect;
-
 function connect(udid) {
 	socket = io("http://localhost:9000");
 	const sockData = { udid: udid };
