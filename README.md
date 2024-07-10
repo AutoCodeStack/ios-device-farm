@@ -41,3 +41,5 @@ npm run start
 ```
 
 Now connect a iphone and open http://localhost:9000 in your browser.
+
+![ios-device-farm](https://github.com/AutoCodeStack/ios-device-farm/blob/main/images/idf-screenshot.png)
