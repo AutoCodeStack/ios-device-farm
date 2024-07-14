@@ -11,6 +11,10 @@ Project Description - goes here
 - NodeJS 16+
 - macOS
 - Xcode 13+
+- iPhone Devices with Developer Mode Enabled [Enabling Developer Mode on a Device](https://developer.apple.com/documentation/xcode/enabling-developer-mode-on-a-device)
+
+> [!NOTE]
+> iPad is not supported as of now.
 
 ### Initialize
 
