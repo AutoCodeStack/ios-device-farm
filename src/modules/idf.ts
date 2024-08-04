@@ -3,27 +3,33 @@ import { TunnelManager } from "./tunnel/tunnel.manager";
 import { WdaControlClient } from "./wda-control/wda.control";
 import { WdaStreamClient } from "./wda-stream/wda.stream";
 import logger from "../config/logger";
-import { WebDriverAgentProcess } from "./wda-control/wda.agent";
 import { Socket } from "socket.io";
 import { buildCommand } from "../schema/wda.types";
+import { SubProcess } from "teen_process";
+import WdaGoIOS from "./wda-control/wda.go.ios";
+import { getDeviceVersion } from "../schema/device.type";
 
 class IDF {
 	tunnelManager: TunnelManager;
 	wdaStreamClient: WdaStreamClient;
 	wdaControlClient?: WdaControlClient;
-	webdriveragent?: WebDriverAgentProcess;
+	wdaGoIOS?: WdaGoIOS;
 
 	udid: string;
+	version: number;
 	socketClient: Socket;
 
 	controlPort?: number;
 	streamPort?: number;
 
-	constructor(udid: string, socket: Socket) {
+	streamClient?: SubProcess;
+
+	constructor(udid: string, version: string, socket: Socket) {
 		this.socketClient = socket;
 		this.udid = udid;
 		this.tunnelManager = new TunnelManager(udid);
 		this.wdaStreamClient = new WdaStreamClient();
+		this.version = getDeviceVersion(version);
 	}
 
 	getPorts() {
@@ -32,7 +38,6 @@ class IDF {
 
 	async sendCommand(data: any) {
 		logger.info(`send command ${JSON.stringify(data)}`);
-
 		try {
 			if (this.wdaControlClient) {
 				const cmd = buildCommand(data);
@@ -73,8 +78,8 @@ class IDF {
 		 * start webdriveragent
 		 */
 		try {
-			this.webdriveragent = new WebDriverAgentProcess(this.udid, controlPort, streamPort);
-			await this.webdriveragent.start();
+			this.wdaGoIOS = new WdaGoIOS(this.udid, this.version, controlPort, streamPort);
+			await this.wdaGoIOS.start();
 		} catch (error) {
 			logger.error(`error start tunnel for stream port`, error);
 			await this.stop();
@@ -118,9 +123,9 @@ class IDF {
 			}
 		});
 
-		this.webdriveragent.on("webdriver_died", (code: number, signal: NodeJS.Signals) => {
-			logger.info(`webdriveragent died due to ${code} - ${signal}`);
-		});
+		// this.wdaGoIOS.on("webdriver_died", (code: number, signal: NodeJS.Signals) => {
+		// 	logger.info(`webdriveragent died due to ${code} - ${signal}`);
+		// });
 	}
 
 	async stop() {
@@ -131,7 +136,7 @@ class IDF {
 		}
 
 		try {
-			await this.webdriveragent?.stop();
+			await this.wdaGoIOS?.stop();
 		} catch (error) {
 			logger.error(`error in stop webdriveragent stopAll`, error);
 		}
@@ -156,8 +161,8 @@ class IDF {
 			this.tunnelManager.removeAllListeners();
 		}
 
-		if (this.webdriveragent) {
-			this.webdriveragent.removeAllListeners();
+		if (this.wdaGoIOS) {
+			this.wdaGoIOS.removeListeners();
 		}
 
 		if (this.wdaStreamClient) {

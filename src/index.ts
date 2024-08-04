@@ -1,4 +1,4 @@
-import DeviceManager from "./modules/device-management/device.manager";
+import { DeviceManager } from "./modules/device-management/device.manager";
 import IDF from "./modules/idf";
 import "./server/server";
 
@@ -15,5 +15,4 @@ IDFMap.client_map = new Map();
 /**
  * Maintain only one device manager
  */
-const deviceManager = new DeviceManager();
-export { deviceManager };
+DeviceManager.getInstance();

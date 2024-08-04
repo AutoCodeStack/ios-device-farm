@@ -1,76 +1,154 @@
-import { Convert, Device, DeviceConnectEvent } from "../../schema/device";
-import { getDeviceInfo } from "../../utils/goios.utils";
-import DeviceDetector from "./device.detector";
+import { SubProcess } from "teen_process";
+import { Mutex } from "async-mutex";
+import { Device, Status } from "../../schema/device.type";
 import logger from "../../config/logger";
-import { Status } from "../../schema/status";
-import { stat } from "fs";
+import { getDeviceName, getDeviceSize } from "../../utils/device.utils";
+import { exec } from "teen_process";
+import { APP_ENV } from "../../config/config";
 
 class DeviceManager {
-	private devices: Map<number, Device>;
-	private detector: DeviceDetector;
+	private static instance: DeviceManager;
+	private devices: Map<string, Device> = new Map();
+	private mutex = new Mutex();
+	iosListenProcess = new SubProcess("ios", ["listen"]);
 
 	constructor() {
-		this.devices = new Map();
-		// properly set listener otherwise might get bugs
-		this.detector = new DeviceDetector();
-		this.setupListeners();
-		this.detector.startDeviceListen();
-		logger.info(`Device Manager init successful`);
+		this.listenToDeviceEvents();
 	}
 
-	private setupListeners(): void {
-		this.detector.on("add", this.addDevice);
-		this.detector.on("delete", this.deleteDevice);
+	public static getInstance(): DeviceManager {
+		if (!DeviceManager.instance) {
+			DeviceManager.instance = new DeviceManager();
+		}
+		return DeviceManager.instance;
 	}
 
-	private addDevice = async (addEvent: DeviceConnectEvent): Promise<void> => {
+	private async attachedEvent(deviceId: number, properties: any) {
+		const release = await this.mutex.acquire();
 		try {
-			const deviceInfo = await getDeviceInfo(addEvent.Properties.SerialNumber);
-			if (deviceInfo) {
-				const device: Device = Convert.toDevice(deviceInfo, addEvent);
-				this.devices.set(device.id, device);
-				logger.info(`Device added: ${JSON.stringify(device)}`);
+			const udid = properties.SerialNumber;
+			let device = this.devices.get(udid);
+			if (device) {
+				device.id = deviceId;
+				device.status = Status.AVAILABLE;
 			} else {
-				logger.warn(`No device info found for serial number: ${addEvent.Properties.SerialNumber}`);
+				const deviceSize = getDeviceSize(properties.productType);
+				device = {
+					id: deviceId,
+					name: getDeviceName(properties.productType),
+					udid: udid,
+					version: properties.version,
+					status: Status.AVAILABLE,
+					dpr: deviceSize.dpr,
+					height: deviceSize.viewportHeight,
+					width: deviceSize.viewportWidth,
+				};
+				this.devices.set(udid, device);
 			}
-		} catch (error) {
-			logger.error(`Failed to add device with serial number ${addEvent.Properties.SerialNumber}: ${error}`);
+			logger.info(`Device (${device.udid}) is now available`);
+		} finally {
+			release();
 		}
-	};
+	}
 
-	private deleteDevice = async (deleteEvent: DeviceConnectEvent): Promise<void> => {
+	private async datachedEvent(deviceId: number) {
+		const release = await this.mutex.acquire();
 		try {
-			const deviceId = deleteEvent.DeviceID;
-			if (this.devices.has(deviceId)) {
-				this.devices.delete(deviceId);
-				logger.info(`Device deleted: ${deviceId}`);
+			let device = this.getDeviceById(deviceId);
+			if (device) {
+				device.status = Status.OFFLINE;
+				logger.info(`Device (${device?.udid}) is offline`);
 			} else {
-				logger.warn(`Couldn't find device with ID: ${deviceId}`);
+				logger.error(`Device (${deviceId}) was not found`);
 			}
-		} catch (error) {
-			logger.error(`Failed to delete device with ID ${deleteEvent.DeviceID}: ${error}`);
+		} finally {
+			release();
 		}
-	};
+	}
 
-	public getDevices = async () => {
+	public async markDeviceAsBusy(udid: string): Promise<void> {
+		const release = await this.mutex.acquire();
+		try {
+			const device = this.getDeviceByUdid(udid);
+			if (device) {
+				device.status = Status.BUSY;
+				logger.info(`Device ${udid} (${device.udid}) is now busy`);
+			} else {
+				logger.error(`Device ${udid} not found`);
+			}
+		} finally {
+			release();
+		}
+	}
+
+	public async markDeviceAsAvailable(udid: string): Promise<void> {
+		const release = await this.mutex.acquire();
+		try {
+			const device = this.getDeviceByUdid(udid);
+			if (device) {
+				device.status = Status.AVAILABLE;
+				logger.info(`Device ${udid} (${device.udid}) is now available`);
+			} else {
+				logger.error(`Device ${udid} not found`);
+			}
+		} finally {
+			release();
+		}
+	}
+
+	public getDevices(): Device[] {
 		return Array.from(this.devices.values());
-	};
+	}
 
-	public getDevice = (udid: string): Device | undefined => {
-		const allDevices = Array.from(this.devices.values());
-		const device = allDevices.find((item: Device) => {
-			return item.udid === udid;
+	public getDeviceByUdid(udid: string): Device | undefined {
+		return Array.from(this.devices.values()).find((device) => device.udid === udid);
+	}
+
+	public getDeviceById(id: number): Device | undefined {
+		return Array.from(this.devices.values()).find((device) => device.id === id);
+	}
+
+	private async listenToDeviceEvents() {
+		this.iosListenProcess.on("lines-stdout", (lines: string[]) => {
+			lines.forEach((line) => this.handleEvent(line));
 		});
-		return device;
-	};
 
-	public changeDeviceStatus(index: number, status: Status) {
-		var device = this.devices.get(index);
-		if (device) {
-			device.status = status;
-			this.devices.set(index, device);
+		this.iosListenProcess.on("lines-stderr", (lines: string[]) => {
+			lines.forEach((line) => logger.warn(`Error: ${line}`));
+		});
+
+		this.iosListenProcess.on("exit", (code: number, signal: string) => {
+			logger.info(`ios listen process exited with code ${code} from signal ${signal}`);
+		});
+
+		try {
+			await this.iosListenProcess.start();
+		} catch (error) {
+			logger.error(`Failed to start ios listen process: ${error}`);
+		}
+	}
+
+	private async handleEvent(line: string) {
+		try {
+			const eventData = JSON.parse(line);
+			const { MessageType, DeviceID, Properties } = eventData;
+			if (MessageType === "Attached") {
+				let { stdout, stderr, code } = await exec(APP_ENV.GO_IOS, ["info", "--udid", `${Properties.SerialNumber}`]);
+				if (code == 0) {
+					const deviceInfo = JSON.parse(stdout);
+					Properties.version = deviceInfo.ProductVersion;
+					Properties.productType = deviceInfo.ProductType;
+					await this.attachedEvent(DeviceID, Properties);
+				}
+			} else if (MessageType === "Detached") {
+				await this.datachedEvent(DeviceID);
+			} else {
+				logger.error(`Unknown event occured for device : ${MessageType}`);
+			}
+		} catch (error) {
+			logger.error(`Failed to parse or handle event: ${line}, error: ${error}`);
 		}
 	}
 }
 
-export default DeviceManager;
+export { DeviceManager };

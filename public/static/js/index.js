@@ -25,14 +25,17 @@ function getDevices() {
 					case 0:
 						statusText = "Use";
 						btnClass = "btn-success"; // Button color for "Use" status
+						disabled = "enabled";
 						break;
 					case 1:
 						statusText = "Busy";
-						btnClass = "btn-danger disabled"; // Button color for "Busy" status
+						btnClass = "btn-danger"; // Button color for "Busy" status
+						disabled = "disabled";
 						break;
 					default:
 						statusText = "Offline";
-						btnClass = "btn-secondary disabled"; // Button color for "Offline" status
+						btnClass = "btn-secondary"; // Button color for "Offline" status
+						disabled = "disabled";
 						break;
 				}
 
@@ -42,7 +45,7 @@ function getDevices() {
                         <td class="udid">${udid}</td>
                         <td>${version}</td>
                         <td>
-                            <button type="button" class="btn ${btnClass}" aria-disabled="${disabled}" onclick="redirectToControl(this)">
+                            <button ${disabled} type="button" class="btn ${btnClass}" aria-disabled="${disabled}" onclick="redirectToControl(this)">
                                 ${statusText}
                             </button>
                         </td>

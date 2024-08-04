@@ -74,7 +74,7 @@ class MjpegParser extends Transform {
 					this.push(data);
 				})
 				.catch((err: any) => {
-					//logger.error();
+					console.log(err);
 				});
 		}
 	}

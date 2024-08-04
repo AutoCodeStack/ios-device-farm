@@ -168,6 +168,6 @@ const iPhoneDevicesSizes: { [key: string]: any } = {
 	"iPhone15,3": { dpr: 3, viewportWidth: 430, viewportHeight: 932 }, // iPhone 15 Pro Max
 };
 
-export function getDeviceName(machineId: string): string | undefined {
-	return iPhoneModels[machineId] || iPadModels[machineId] || undefined;
+export function getDeviceName(machineId: string): string {
+	return iPhoneModels[machineId] || iPadModels[machineId] || "iPhone";
 }
